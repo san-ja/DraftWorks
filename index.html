@@ -1,7 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DraftWorks – AI Drawing Compliance Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:     #E8002D;
+      --red-dark:#A8001F;
+      --crimson: #6B0016;
+      --black:   #111111;
+      --gray:    #444444;
+      --muted:   #777777;
+      --rule:    #E0E0E0;
+      --bg:      #FFFFFF;
+      --bg2:     #F7F7F7;
+      --radius:  8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--black);
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #fff;
+      border-bottom: 2px solid var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 58px;
+    }
+    .nav-logo {
+      font-weight: 900;
+      font-size: 1.15rem;
+      letter-spacing: -.01em;
+      color: var(--black);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--red); }
+    .nav-links { display: flex; gap: 1.8rem; list-style: none; align-items: center; }
+    .nav-links a {
+      color: var(--gray);
+      text-decoration: none;
+      font-size: .88rem;
+      font-weight: 500;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--red); }
+    .nav-cta {
+      background: var(--red) !important;
+      color: #fff !important;
+      padding: .38rem 1rem;
+      border-radius: 4px;
+      font-weight: 700 !important;
+      font-size: .85rem !important;
+    }
+    .nav-cta:hover { background: var(--red-dark) !important; }
+
+    /* HERO */
+    .hero {
+      background: #fff;
+      padding: 6rem 2rem 5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .hero-inner { max-width: 980px; margin: 0 auto; }
+    .hero-track {
+      display: inline-block;
+      background: var(--red);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .25rem .75rem;
+      border-radius: 2px;
+      margin-bottom: 1.6rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      font-weight: 900;
+      letter-spacing: -.03em;
+      line-height: 1.08;
+      color: var(--black);
+      margin-bottom: .9rem;
+      max-width: 700px;
+    }
+    .hero h1 em { color: var(--red); font-style: normal; }
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--gray);
+      max-width: 560px;
+      margin-bottom: 2.2rem;
+      line-height: 1.65;
+    }
+    .hero-byline { font-size: .85rem; color: var(--muted); margin-bottom: 2rem; }
+    .hero-actions { display: flex; gap: .9rem; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-block;
+      background: var(--red);
+      color: #fff;
+      padding: .8rem 2rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: .95rem;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-secondary {
+      display: inline-block;
+      background: transparent;
+      color: var(--black);
+      border: 1.5px solid #ccc;
+      padding: .8rem 2rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: .95rem;
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-secondary:hover { border-color: var(--red); color: var(--red); }
+
+    /* SECTIONS */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 980px; margin: 0 auto; }
+    .section-eyebrow {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: .5rem;
+    }
+    h2 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: -.025em;
+      line-height: 1.12;
+      color: var(--black);
+      margin-bottom: .9rem;
+    }
+    .section-lead {
+      font-size: 1rem;
+      color: var(--gray);
+      max-width: 580px;
+      margin-bottom: 3rem;
+      line-height: 1.65;
+    }
+
+    /* TEAM */
+    #team { background: var(--bg2); border-bottom: 1px solid var(--rule); }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem;
+    }
+    .team-card { text-align: center; }
+    .team-avatar {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--red) 0%, var(--crimson) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #fff;
+      margin: 0 auto 1rem;
+      border: 3px solid var(--red);
+    }
+    .team-card h3 { font-size: 1rem; font-weight: 800; margin-bottom: .15rem; }
+    .team-card .role { font-size: .82rem; color: var(--red); font-weight: 700; margin-bottom: .25rem; }
+    .team-card .affil { font-size: .8rem; color: var(--muted); }
+    .team-card .edu { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+
+    /* PROBLEM */
+    #problem { background: #fff; border-bottom: 1px solid var(--rule); }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      border-left: 4px solid var(--red);
+    }
+    .stat-number {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--red);
+      line-height: 1;
+      margin-bottom: .35rem;
+      letter-spacing: -.03em;
+    }
+    .stat-label {
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .6rem;
+    }
+    .stat-desc { font-size: .88rem; color: var(--gray); line-height: 1.55; }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.2rem;
+    }
+    .problem-card {
+      background: var(--red);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+      color: #fff;
+    }
+    .problem-card h3 { font-size: .95rem; font-weight: 800; margin-bottom: .5rem; }
+    .problem-card p { font-size: .86rem; opacity: .88; line-height: 1.55; }
+    .sources { margin-top: 1.5rem; font-size: .74rem; color: var(--muted); }
+
+    /* SOLUTION */
+    #solution { background: var(--crimson); color: #fff; }
+    #solution .section-eyebrow { color: rgba(255,255,255,.55); }
+    #solution h2 { color: #fff; }
+    .solution-box {
+      border-left: 4px solid var(--red);
+      padding-left: 1.8rem;
+      max-width: 740px;
+      margin-bottom: 3rem;
+    }
+    .solution-box p { font-size: 1.15rem; line-height: 1.7; color: rgba(255,255,255,.92); }
+    .solution-box em { color: #fff; font-style: normal; font-weight: 700; }
+    .deploy-label {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+      margin-bottom: .6rem;
+    }
+    .deploy-sub { font-size: .95rem; color: rgba(255,255,255,.7); margin-bottom: 1.4rem; }
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.2rem;
+    }
+    .deploy-card {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+    }
+    .deploy-card h3 { font-size: .95rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
+    .deploy-card p { font-size: .86rem; color: rgba(255,255,255,.75); line-height: 1.55; }
+
+    /* CAPABILITIES */
+    #capabilities { background: var(--bg2); border-bottom: 1px solid var(--rule); }
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.2rem;
+    }
+    .cap-card {
+      background: #fff;
+      border: 1.5px solid var(--rule);
+      border-top: 3px solid var(--red);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+    }
+    .cap-num {
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+    .cap-card h3 { font-size: .95rem; font-weight: 800; margin-bottom: .8rem; color: var(--black); }
+    .cap-card ul { padding-left: 1.1rem; }
+    .cap-card li { font-size: .84rem; color: var(--gray); margin-bottom: .35rem; line-height: 1.45; }
+
+    /* ARCHITECTURE */
+    #architecture { background: #fff; border-bottom: 1px solid var(--rule); }
+    .arch-flow { display: flex; flex-direction: column; max-width: 680px; }
+    .arch-step {
+      display: flex;
+      gap: 1.2rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .arch-step:last-child { border-bottom: none; }
+    .arch-num {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--red);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .arch-body h3 { font-size: .93rem; font-weight: 800; margin-bottom: .2rem; color: var(--black); }
+    .arch-body p { font-size: .85rem; color: var(--gray); line-height: 1.5; }
+    .arch-tag {
+      display: inline-block;
+      background: #F0F0F0;
+      color: var(--gray);
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .15rem .5rem;
+      border-radius: 3px;
+      margin-top: .4rem;
+    }
+
+    /* DEMO */
+    #demo { background: var(--bg2); border-bottom: 1px solid var(--rule); }
+    .demo-instructions {
+      background: #fff;
+      border: 1.5px solid var(--rule);
+      border-left: 4px solid var(--red);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 2rem;
+      max-width: 620px;
+    }
+    .demo-instructions p { font-size: .9rem; font-weight: 700; margin-bottom: .7rem; color: var(--black); }
+    .demo-instructions ol { padding-left: 1.2rem; }
+    .demo-instructions li { font-size: .87rem; color: var(--gray); margin-bottom: .35rem; line-height: 1.5; }
+    .demo-instructions li strong { color: var(--black); }
+    .files-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .file-card {
+      background: #fff;
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .9rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .file-card:hover {
+      border-color: var(--red);
+      box-shadow: 0 2px 12px rgba(232,0,45,.1);
+    }
+    .file-icon {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem;
+      font-weight: 900;
+    }
+    .file-icon.pdf  { background: rgba(232,0,45,.1); color: var(--red); }
+    .file-icon.xlsx { background: rgba(33,150,83,.12); color: #1d7a48; }
+    .file-icon.docx { background: rgba(41,98,198,.12); color: #2962c6; }
+    .file-meta { flex: 1; min-width: 0; }
+    .file-name { font-size: .88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--black); }
+    .file-desc { font-size: .76rem; color: var(--muted); margin-top: .1rem; }
+    .file-dl { flex-shrink: 0; color: var(--muted); font-size: .9rem; transition: color .15s; }
+    .file-card:hover .file-dl { color: var(--red); }
+    .demo-cta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .demo-cta span { font-size: .85rem; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      background: var(--black);
+      color: rgba(255,255,255,.5);
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .footer-logo { font-size: 1.2rem; font-weight: 900; color: #fff; margin-bottom: .4rem; }
+    .footer-logo span { color: var(--red); }
+    footer p { font-size: .82rem; }
+    footer a { color: var(--red); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.2rem; }
+      .nav-links { display: none; }
+      section { padding: 3.5rem 1.2rem; }
+      .hero { padding: 4rem 1.2rem 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">Draft<span>Works</span></a>
+  <ul class="nav-links">
+    <li><a href="#team">Team</a></li>
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="https://draftworks-app.vercel.app/" target="_blank" class="nav-cta">Launch App &rarr;</a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-track">Track: GenAI.mil &nbsp;&middot;&nbsp; 2026 SCSP Hackathon &middot; Boston</div>
+    <h1>DraftWorks<br><em>AI Co-Pilot</em> for Drawing<br>Compliance</h1>
+    <p class="hero-sub">
+      An AI copilot that validates technical drawings and parts data to reduce
+      administrative burden and improve mission readiness.
+    </p>
+    <p class="hero-byline">By Sanja Kirova, Axel Ortega, and Emanuel Perez</p>
+    <div class="hero-actions">
+      <a href="https://draftworks-app.vercel.app/" target="_blank" class="btn-primary">Launch the App &rarr;</a>
+      <a href="#demo" class="btn-secondary">Download Sample Files</a>
+    </div>
+  </div>
+</header>
+
+<section id="team">
+  <div class="container">
+    <div class="section-eyebrow">The Team</div>
+    <h2>Team</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">SK</div>
+        <h3>Sanja Kirova</h3>
+        <div class="role">Mechanical Design Engineer</div>
+        <div class="affil">GE Aerospace &middot; Land and Air Defense Systems</div>
+        <div class="edu">B.S. Mechanical Engineering &middot; Columbia University</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">AO</div>
+        <h3>Axel Ortega</h3>
+        <div class="role">Mechanical Design Engineer</div>
+        <div class="affil">RTX &middot; Strategic Readiness Team &ndash; Defense</div>
+        <div class="edu">B.S. Business &middot; Norfolk State University</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">EP</div>
+        <h3>Emanuel Perez</h3>
+        <div class="role">Software Engineer</div>
+        <div class="affil">Explay, LLC &middot; Research &amp; Development</div>
+        <div class="edu">B.S. Mechanical Engineering &middot; Columbia University</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="problem">
+  <div class="container">
+    <div class="section-eyebrow">The Problem</div>
+    <h2>Small Drawing Errors Lead<br>to Large Program Delays</h2>
+    <p class="section-lead">
+      Engineers manually review drawings across evolving standards, specs, and BOMs &mdash;
+      and mistakes are often caught too late, when they cost the most to fix.
+    </p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">63%</div>
+        <div class="stat-label">Programs affected</div>
+        <div class="stat-desc">of major defense programs experienced engineering changes, contributing to <strong>72% cost growth</strong> vs. 11% for programs without changes.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">100&times;</div>
+        <div class="stat-label">Cost of late defects</div>
+        <div class="stat-desc">Defects discovered later in the lifecycle can become up to 100&times; more expensive to resolve than those caught early.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">&gt;30%</div>
+        <div class="stat-label">Engineering time lost</div>
+        <div class="stat-desc">Engineers may spend over 30% of their time on non-value-added data reconciliation, review, and documentation tasks.</div>
+      </div>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <h3>Manual Validation</h3>
+        <p>Engineers manually review and update drawings for sustainment and obsolescence across evolving standards, specs, and BOMs.</p>
+      </div>
+      <div class="problem-card">
+        <h3>Errors Detected Late</h3>
+        <p>Missed inconsistencies in drawings are often only discovered late in the process &mdash; well past the cheapest point to fix them.</p>
+      </div>
+      <div class="problem-card">
+        <h3>Costly ECPs &amp; Delays</h3>
+        <p>Errors found during approval trigger Engineering Change Proposals (ECPs), delaying critical defense hardware programs.</p>
+      </div>
+    </div>
+    <p class="sources">Sources: GAO / AFIT Research &middot; NASA Systems Engineering &middot; Dassault Syst&egrave;mes Engineering Study</p>
+  </div>
+</section>
+
+<section id="solution">
+  <div class="container">
+    <div class="section-eyebrow">The Solution</div>
+    <h2>DraftWorks</h2>
+    <div class="solution-box">
+      <p>
+        DraftWorks is an <em>AI co-pilot</em> that validates assembly drawings,
+        flags inconsistencies and outdated components, and generates
+        <em>compliant markup</em> to reduce manual review across government workflows.
+        Built for mission-critical and highly regulated engineering review environments.
+      </p>
+    </div>
+    <p class="deploy-label">Deployment Opportunities</p>
+    <p class="deploy-sub">Built for mission-critical and highly regulated engineering review workflows.</p>
+    <div class="deploy-grid">
+      <div class="deploy-card">
+        <h3>Government Engineering Organizations</h3>
+        <p>Government engineering and sustainment environments managing technical documentation, configuration control, and engineering review workflows.</p>
+      </div>
+      <div class="deploy-card">
+        <h3>Defense Industrial Base &amp; Suppliers</h3>
+        <p>Defense manufacturers, subcontractors, and suppliers operating within compliance-driven engineering and production environments.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="container">
+    <div class="section-eyebrow">Core Capabilities</div>
+    <h2>Core Capabilities</h2>
+    <p class="section-lead">Four integrated steps turn a raw engineering drawing and supporting data into a structured compliance report.</p>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="cap-num">01 &mdash; Ingest Data</div>
+        <h3>Ingest Data</h3>
+        <ul>
+          <li>Upload assembly drawings (PDF/image)</li>
+          <li>Attach BOM / parts lists</li>
+          <li>Attach standards and specifications</li>
+        </ul>
+      </div>
+      <div class="cap-card">
+        <div class="cap-num">02 &mdash; Parse &amp; Structure</div>
+        <h3>Parse &amp; Structure</h3>
+        <ul>
+          <li>Convert drawing into structured data</li>
+          <li>Extract title block, notes, and revisions</li>
+          <li>Identify components and relationships</li>
+          <li>Build a machine-readable representation</li>
+        </ul>
+      </div>
+      <div class="cap-card">
+        <div class="cap-num">03 &mdash; Validate &amp; Compare</div>
+        <h3>Validate &amp; Compare</h3>
+        <ul>
+          <li>Detect inconsistencies and missing info</li>
+          <li>Cross-check drawing vs BOM</li>
+          <li>Flag outdated components and specs</li>
+          <li>Identify missing requirements</li>
+        </ul>
+      </div>
+      <div class="cap-card">
+        <div class="cap-num">04 &mdash; Generate Output</div>
+        <h3>Generate Output</h3>
+        <ul>
+          <li>Highlight issues and suggest fixes</li>
+          <li>Mark issues directly on drawings</li>
+          <li>Recommend corrections and alternatives</li>
+          <li>Generate compliant markup / redlines</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="container">
+    <div class="section-eyebrow">Architecture</div>
+    <h2>DraftWorks Architecture</h2>
+    <p class="section-lead">A modern cloud stack from file upload through AI analysis to structured issue output.</p>
+    <div class="arch-flow">
+      <div class="arch-step">
+        <div class="arch-num">1</div>
+        <div class="arch-body">
+          <h3>User Uploads Files</h3>
+          <p>Assembly drawing (PDF or image) plus optional context files and foundational org context via RAG.</p>
+          <span class="arch-tag">Drawing PDF/Image &middot; Context Files &middot; SurrealDB (RAG)</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">2</div>
         <div class="arch-body">
           <h3>Frontend Web App</h3>
           <p>React/TypeScript interface hosted on Vercel, orchestrating uploads and displaying structured results.</p>
-          <span class="tag">DraftWorks Web App · Vercel</span>
+          <span class="arch-tag">DraftWorks Web App &middot; Vercel</span>
         </div>
       </div>
       <div class="arch-step">
@@ -9,7 +608,7 @@
         <div class="arch-body">
           <h3>Backend API</h3>
           <p>FastAPI service hosted on Render receives files, coordinates processing, and returns normalized issue lists.</p>
-          <span class="tag">FastAPI · Render</span>
+          <span class="arch-tag">FastAPI &middot; Render</span>
         </div>
       </div>
       <div class="arch-step">
@@ -17,15 +616,15 @@
         <div class="arch-body">
           <h3>Processing Layer</h3>
           <p>OCR extracts text from scanned drawings; zone parsing splits pages into title block, notes, revision block, and drawing area; rule matching runs standards and BOM checks.</p>
-          <span class="tag">rapidocr · pymupdf · SurrealDB (RAG)</span>
+          <span class="arch-tag">rapidocr &middot; pymupdf &middot; Zone Parsing &middot; Rule Matching</span>
         </div>
       </div>
       <div class="arch-step">
         <div class="arch-num">5</div>
         <div class="arch-body">
           <h3>AI Layer</h3>
-          <p>Gemma 4 via Ollama reasons over the structured drawing data and context to identify nuanced compliance issues.</p>
-          <span class="tag">Ollama Cloud (gemma4:31b) · Ollama Local (gemma4:e4b)</span>
+          <p>Gemma 4 via Ollama reasons over structured drawing data and context to identify nuanced compliance issues.</p>
+          <span class="arch-tag">Ollama Cloud (gemma4:31b) &middot; Ollama Local (gemma4:e4b)</span>
         </div>
       </div>
       <div class="arch-step">
@@ -33,148 +632,102 @@
         <div class="arch-body">
           <h3>Results</h3>
           <p>Structured issue list with type, severity, page, section, evidence, expected vs. found values, and recommended action.</p>
-          <span class="tag">Issues · Severity · Recommended Changes</span>
+          <span class="arch-tag">Issues &middot; Severity &middot; Recommended Changes</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── DEMO ─────────────────────────────────────────────── -->
 <section id="demo">
   <div class="container">
-    <div class="section-label">Live Demo</div>
+    <div class="section-eyebrow">Live Demo</div>
     <h2>Try It Yourself</h2>
-    <p class="section-desc">Download the sample files below, then open the app and follow the steps to experience the full demo.</p>
-
-    <div class="demo-intro">
-      <p><strong>How to run the demo:</strong></p>
-      <ol class="demo-steps">
+    <p class="section-lead">Download the sample files, then open the app to experience the full demo.</p>
+    <div class="demo-instructions">
+      <p>How to run the demo:</p>
+      <ol>
         <li>Download the sample files below</li>
         <li>Open the app and select <strong>Run online</strong></li>
         <li>Upload <strong>assy_r3.PDF</strong> as the assembly drawing</li>
-        <li>Upload one or more of the context files (start with <strong>MaterialsAndProcesses.xlsx</strong>)</li>
+        <li>Upload one or more context files &mdash; start with <strong>MaterialsAndProcesses.xlsx</strong></li>
         <li>Click <strong>Compare</strong> and review the flagged issues</li>
       </ol>
     </div>
-
     <div class="files-grid">
-
       <a class="file-card" href="Sample%20Files/assy_r3.PDF" download>
         <div class="file-icon pdf">PDF</div>
         <div class="file-meta">
           <div class="file-name">assy_r3.PDF</div>
-          <div class="file-desc">Assembly drawing — primary input</div>
+          <div class="file-desc">Assembly drawing &mdash; primary input</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
       <a class="file-card" href="Sample%20Files/MaterialsAndProcesses.xlsx" download>
         <div class="file-icon xlsx">XLS</div>
         <div class="file-meta">
           <div class="file-name">MaterialsAndProcesses.xlsx</div>
           <div class="file-desc">Materials &amp; processes reference</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
       <a class="file-card" href="Sample%20Files/BOM20260425.xlsx" download>
         <div class="file-icon xlsx">XLS</div>
         <div class="file-meta">
           <div class="file-name">BOM20260425.xlsx</div>
           <div class="file-desc">Bill of Materials</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
       <a class="file-card" href="Sample%20Files/Hierarchy.xlsx" download>
         <div class="file-icon xlsx">XLS</div>
         <div class="file-meta">
           <div class="file-name">Hierarchy.xlsx</div>
           <div class="file-desc">Assembly hierarchy / structure</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
       <a class="file-card" href="Sample%20Files/Project%20Information.xlsx" download>
         <div class="file-icon xlsx">XLS</div>
         <div class="file-meta">
           <div class="file-name">Project Information.xlsx</div>
           <div class="file-desc">Project metadata and details</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
       <a class="file-card" href="Sample%20Files/AssemblyNotes.xlsx" download>
         <div class="file-icon xlsx">XLS</div>
         <div class="file-meta">
           <div class="file-name">AssemblyNotes.xlsx</div>
           <div class="file-desc">Assembly notes and annotations</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
       <a class="file-card" href="Sample%20Files/CHEM-9857.docx" download>
         <div class="file-icon docx">DOC</div>
         <div class="file-meta">
           <div class="file-name">CHEM-9857.docx</div>
           <div class="file-desc">Chemical specification document</div>
         </div>
-        <div class="file-dl">↓</div>
+        <div class="file-dl">&#x2193;</div>
       </a>
-
     </div>
-
     <div class="demo-cta">
-      <a href="https://draftworks-app.vercel.app/" target="_blank" class="btn-primary">Open DraftWorks App →</a>
-      <span style="color:var(--muted); font-size:.9rem;">No account required · Use app key by default</span>
+      <a href="https://draftworks-app.vercel.app/" target="_blank" class="btn-primary">Open DraftWorks App &rarr;</a>
+      <span>No account required &middot; Use app key by default</span>
     </div>
   </div>
 </section>
 
-<!-- ── TEAM ──────────────────────────────────────────────── -->
-<section id="team">
-  <div class="container">
-    <div class="section-label">The Team</div>
-    <h2>Built at SCSP Hackathon 2026</h2>
-    <p class="section-desc">Three engineers combining mechanical design, software, and defense domain expertise.</p>
-
-    <div class="team-grid">
-      <div class="team-card">
-        <div class="team-avatar">SK</div>
-        <h3>Sanja Kirova</h3>
-        <div class="role">Mechanical Design Engineer</div>
-        <div class="affil">GE Aerospace · Land and Air Defense Systems</div>
-        <div class="edu">B.S. Mechanical Engineering · Columbia University</div>
-      </div>
-      <div class="team-card">
-        <div class="team-avatar">AO</div>
-        <h3>Axel Ortega</h3>
-        <div class="role">Mechanical Design Engineer</div>
-        <div class="affil">RTX · Strategic Readiness Team – Defense</div>
-        <div class="edu">B.S. Business · Norfolk State University</div>
-      </div>
-      <div class="team-card">
-        <div class="team-avatar">EP</div>
-        <h3>Emanuel Perez</h3>
-        <div class="role">Software Engineer</div>
-        <div class="affil">Explay, LLC · Research &amp; Development</div>
-        <div class="edu">B.S. Mechanical Engineering · Columbia University</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── FOOTER ────────────────────────────────────────────── -->
 <footer>
-  <div class="logo-f">Draft<span>Works</span></div>
+  <div class="footer-logo">Draft<span>Works</span></div>
   <p>AI-assisted drawing compliance for defense and mechanical engineering workflows.</p>
-  <p style="margin-top:.5rem;">
+  <p style="margin-top:.4rem;">
     <a href="https://draftworks-app.vercel.app/" target="_blank">Launch App</a>
-    &nbsp;·&nbsp;
+    &nbsp;&middot;&nbsp;
     <a href="#demo">Sample Files</a>
-    &nbsp;·&nbsp;
-    2026 SCSP Hackathon · Track: GenAI.mil
+    &nbsp;&middot;&nbsp;
+    2026 SCSP Hackathon &middot; Track: GenAI.mil
   </p>
 </footer>
 
