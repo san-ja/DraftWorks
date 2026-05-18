@@ -1,100 +1,182 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DraftWorks – AI Drawing Compliance Checker</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        <div class="arch-body">
+          <h3>Frontend Web App</h3>
+          <p>React/TypeScript interface hosted on Vercel, orchestrating uploads and displaying structured results.</p>
+          <span class="tag">DraftWorks Web App · Vercel</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">3</div>
+        <div class="arch-body">
+          <h3>Backend API</h3>
+          <p>FastAPI service hosted on Render receives files, coordinates processing, and returns normalized issue lists.</p>
+          <span class="tag">FastAPI · Render</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">4</div>
+        <div class="arch-body">
+          <h3>Processing Layer</h3>
+          <p>OCR extracts text from scanned drawings; zone parsing splits pages into title block, notes, revision block, and drawing area; rule matching runs standards and BOM checks.</p>
+          <span class="tag">rapidocr · pymupdf · SurrealDB (RAG)</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">5</div>
+        <div class="arch-body">
+          <h3>AI Layer</h3>
+          <p>Gemma 4 via Ollama reasons over the structured drawing data and context to identify nuanced compliance issues.</p>
+          <span class="tag">Ollama Cloud (gemma4:31b) · Ollama Local (gemma4:e4b)</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">6</div>
+        <div class="arch-body">
+          <h3>Results</h3>
+          <p>Structured issue list with type, severity, page, section, evidence, expected vs. found values, and recommended action.</p>
+          <span class="tag">Issues · Severity · Recommended Changes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-    :root {
-      --navy:   #0a1628;
-      --navy2:  #0d1f3c;
-      --blue:   #1a3a6b;
-      --accent: #2a7fff;
-      --gold:   #f0b429;
-      --text:   #e8edf5;
-      --muted:  #8a9bb8;
-      --card:   #111e35;
-      --border: rgba(42,127,255,0.18);
-      --radius: 12px;
-    }
+<!-- ── DEMO ─────────────────────────────────────────────── -->
+<section id="demo">
+  <div class="container">
+    <div class="section-label">Live Demo</div>
+    <h2>Try It Yourself</h2>
+    <p class="section-desc">Download the sample files below, then open the app and follow the steps to experience the full demo.</p>
 
-    html { scroll-behavior: smooth; }
+    <div class="demo-intro">
+      <p><strong>How to run the demo:</strong></p>
+      <ol class="demo-steps">
+        <li>Download the sample files below</li>
+        <li>Open the app and select <strong>Run online</strong></li>
+        <li>Upload <strong>assy_r3.PDF</strong> as the assembly drawing</li>
+        <li>Upload one or more of the context files (start with <strong>MaterialsAndProcesses.xlsx</strong>)</li>
+        <li>Click <strong>Compare</strong> and review the flagged issues</li>
+      </ol>
+    </div>
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--navy);
-      color: var(--text);
-      line-height: 1.65;
-    }
+    <div class="files-grid">
 
-    /* ── NAV ─────────────────────────────────────────── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10,22,40,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      height: 60px;
-    }
-    .nav-logo {
-      font-weight: 800;
-      font-size: 1.2rem;
-      letter-spacing: .04em;
-      color: var(--text);
-      text-decoration: none;
-    }
-    .nav-logo span { color: var(--accent); }
-    .nav-links { display: flex; gap: 1.6rem; list-style: none; }
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: .9rem;
-      transition: color .2s;
-    }
-    .nav-links a:hover { color: var(--text); }
-    .nav-cta {
-      background: var(--accent);
-      color: #fff !important;
-      padding: .35rem .9rem;
-      border-radius: 6px;
-      font-weight: 600;
-    }
-    .nav-cta:hover { background: #1a6fe0 !important; color: #fff !important; }
+      <a class="file-card" href="Sample%20Files/assy_r3.PDF" download>
+        <div class="file-icon pdf">PDF</div>
+        <div class="file-meta">
+          <div class="file-name">assy_r3.PDF</div>
+          <div class="file-desc">Assembly drawing — primary input</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
 
-    /* ── HERO ────────────────────────────────────────── */
-    .hero {
-      position: relative;
-      overflow: hidden;
-      text-align: center;
-      padding: 7rem 1.5rem 6rem;
-      background: linear-gradient(160deg, #0d1f3c 0%, #0a1628 60%, #061020 100%);
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(42,127,255,.15) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero-badge {
-      display: inline-block;
-      background: rgba(42,127,255,.15);
-      border: 1px solid rgba(42,127,255,.4);
-      color: var(--accent);
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      padding: .3rem .9rem;
-      border-radius: 20px;
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 {
-      font-size: clamp(2.4rem, 6vw, 4rem);
+      <a class="file-card" href="Sample%20Files/MaterialsAndProcesses.xlsx" download>
+        <div class="file-icon xlsx">XLS</div>
+        <div class="file-meta">
+          <div class="file-name">MaterialsAndProcesses.xlsx</div>
+          <div class="file-desc">Materials &amp; processes reference</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
+
+      <a class="file-card" href="Sample%20Files/BOM20260425.xlsx" download>
+        <div class="file-icon xlsx">XLS</div>
+        <div class="file-meta">
+          <div class="file-name">BOM20260425.xlsx</div>
+          <div class="file-desc">Bill of Materials</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
+
+      <a class="file-card" href="Sample%20Files/Hierarchy.xlsx" download>
+        <div class="file-icon xlsx">XLS</div>
+        <div class="file-meta">
+          <div class="file-name">Hierarchy.xlsx</div>
+          <div class="file-desc">Assembly hierarchy / structure</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
+
+      <a class="file-card" href="Sample%20Files/Project%20Information.xlsx" download>
+        <div class="file-icon xlsx">XLS</div>
+        <div class="file-meta">
+          <div class="file-name">Project Information.xlsx</div>
+          <div class="file-desc">Project metadata and details</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
+
+      <a class="file-card" href="Sample%20Files/AssemblyNotes.xlsx" download>
+        <div class="file-icon xlsx">XLS</div>
+        <div class="file-meta">
+          <div class="file-name">AssemblyNotes.xlsx</div>
+          <div class="file-desc">Assembly notes and annotations</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
+
+      <a class="file-card" href="Sample%20Files/CHEM-9857.docx" download>
+        <div class="file-icon docx">DOC</div>
+        <div class="file-meta">
+          <div class="file-name">CHEM-9857.docx</div>
+          <div class="file-desc">Chemical specification document</div>
+        </div>
+        <div class="file-dl">↓</div>
+      </a>
+
+    </div>
+
+    <div class="demo-cta">
+      <a href="https://draftworks-app.vercel.app/" target="_blank" class="btn-primary">Open DraftWorks App →</a>
+      <span style="color:var(--muted); font-size:.9rem;">No account required · Use app key by default</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── TEAM ──────────────────────────────────────────────── -->
+<section id="team">
+  <div class="container">
+    <div class="section-label">The Team</div>
+    <h2>Built at SCSP Hackathon 2026</h2>
+    <p class="section-desc">Three engineers combining mechanical design, software, and defense domain expertise.</p>
+
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">SK</div>
+        <h3>Sanja Kirova</h3>
+        <div class="role">Mechanical Design Engineer</div>
+        <div class="affil">GE Aerospace · Land and Air Defense Systems</div>
+        <div class="edu">B.S. Mechanical Engineering · Columbia University</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">AO</div>
+        <h3>Axel Ortega</h3>
+        <div class="role">Mechanical Design Engineer</div>
+        <div class="affil">RTX · Strategic Readiness Team – Defense</div>
+        <div class="edu">B.S. Business · Norfolk State University</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">EP</div>
+        <h3>Emanuel Perez</h3>
+        <div class="role">Software Engineer</div>
+        <div class="affil">Explay, LLC · Research &amp; Development</div>
+        <div class="edu">B.S. Mechanical Engineering · Columbia University</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ────────────────────────────────────────────── -->
+<footer>
+  <div class="logo-f">Draft<span>Works</span></div>
+  <p>AI-assisted drawing compliance for defense and mechanical engineering workflows.</p>
+  <p style="margin-top:.5rem;">
+    <a href="https://draftworks-app.vercel.app/" target="_blank">Launch App</a>
+    &nbsp;·&nbsp;
+    <a href="#demo">Sample Files</a>
+    &nbsp;·&nbsp;
+    2026 SCSP Hackathon · Track: GenAI.mil
+  </p>
+</footer>
+
+</body>
+</html>
