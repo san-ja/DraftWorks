@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DraftWorks – AI Drawing Compliance Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0a1628;
+      --navy2:  #0d1f3c;
+      --blue:   #1a3a6b;
+      --accent: #2a7fff;
+      --gold:   #f0b429;
+      --text:   #e8edf5;
+      --muted:  #8a9bb8;
+      --card:   #111e35;
+      --border: rgba(42,127,255,0.18);
+      --radius: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    /* ── NAV ─────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,22,40,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 60px;
+    }
+    .nav-logo {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: .04em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 1.6rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .9rem;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: #fff !important;
+      padding: .35rem .9rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .nav-cta:hover { background: #1a6fe0 !important; color: #fff !important; }
+
+    /* ── HERO ────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      padding: 7rem 1.5rem 6rem;
+      background: linear-gradient(160deg, #0d1f3c 0%, #0a1628 60%, #061020 100%);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(42,127,255,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(42,127,255,.15);
+      border: 1px solid rgba(42,127,255,.4);
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .3rem .9rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
